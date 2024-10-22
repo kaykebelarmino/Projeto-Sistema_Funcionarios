@@ -1,7 +1,7 @@
 <?php
 include 'conexao.php';
 
-//teste aq no index
+//teste aq
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
