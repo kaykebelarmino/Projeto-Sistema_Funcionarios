@@ -1,6 +1,11 @@
 <?php
 include 'conexao.php';
+
+// Verifica os últimos departamentos cadastrados
+$sql = "SELECT * FROM departamentos ORDER BY id DESC LIMIT 5";
+$result = $conn->query($sql);
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -13,10 +18,10 @@ include 'conexao.php';
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=menu" />
     <script src="assets/script.js" defer></script>
 </head>
-<body class="overflow-hidden">
+<body>
 <div class="container-fluid">
     <div class="bg-black container-header">
-    <section class="wrapper col-md-2">
+        <section class="wrapper col-md-2">
             <section class="material-design-hamburger mt-10">
                 <button class="material-design-hamburger__icon">
                     <span class="material-symbols-outlined icon">menu</span>
@@ -45,8 +50,38 @@ include 'conexao.php';
             <label for="nome_departamento" class="form-label">Nome do Departamento</label>
             <input type="text" class="form-control" id="nome_departamento" name="nome_departamento" required>
         </div>
+        <div class="mb-3">
+            <label for="descricao" class="form-label">Descrição</label>
+            <input type="text" class="form-control" id="descricao" name="descricao">
+        </div>
         <button type="submit" class="btn btn-primary">Cadastrar Departamento</button>
     </form>
+
+    <h3 class="mt-4">Últimos Departamentos Cadastrados</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Descrição</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($result->num_rows > 0): ?>
+                <?php while ($row = $result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo $row['id']; ?></td>
+                        <td><?php echo $row['nome']; ?></td>
+                        <td><?php echo $row['descricao'] ?? 'N/A'; ?></td>
+                    </tr>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="3">Nenhum departamento cadastrado.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -63,11 +98,13 @@ document.getElementById('formDepartamento').addEventListener('submit', function(
     .then(response => response.text())
     .then(result => {
         Toastify({
-            text: "Departamento cadastrado com sucesso!",
-            backgroundColor: "green",
+            text: result.includes('sucesso') ? "Departamento cadastrado com sucesso!" : "Erro ao cadastrar departamento.",
+            backgroundColor: result.includes('sucesso') ? "green" : "red",
             duration: 3000
         }).showToast();
         document.getElementById('formDepartamento').reset();
+        // Atualiza a tabela de departamentos após o cadastro
+        location.reload(); // Recarrega a página para mostrar os novos dados
     })
     .catch(error => {
         Toastify({

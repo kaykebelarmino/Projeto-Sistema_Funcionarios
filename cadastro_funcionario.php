@@ -15,12 +15,12 @@ include 'conexao.php';
 </head>
 <body class="overflow-hidden">
 <div class="bg-black container-header">
-<section class="wrapper col-md-2">
-            <section class="material-design-hamburger mt-10">
-                <button class="material-design-hamburger__icon">
-                    <span class="material-symbols-outlined icon">menu</span>
-                </button>
-            </section>
+    <section class="wrapper col-md-2">
+        <section class="material-design-hamburger mt-10">
+            <button class="material-design-hamburger__icon">
+                <span class="material-symbols-outlined icon">menu</span>
+            </button>
+        </section>
 
         <section class="menu menu--off">
             <div><a href="index.php">Dashboard</a></div>
@@ -37,7 +37,6 @@ include 'conexao.php';
     </div>
 </div>
 
-
 <div class="container mt-4">
     <form id="formCadastro" action="processa_cadastro_funcionario.php" method="POST">
         <div class="mb-3">
@@ -53,8 +52,8 @@ include 'conexao.php';
             <input type="text" class="form-control" id="salario" name="salario" required>
         </div>
         <div class="mb-3">
-            <label for="data_admissao" class="form-label">Data de Admissão</label> 
-            <input type="date" class="form-control" id="data_admissao" name="data_admissao" required> 
+            <label for="data_admissao" class="form-label">Data de Admissão</label>
+            <input type="date" class="form-control" id="data_admissao" name="data_admissao" required>
         </div>
         <div class="mb-3">
             <label for="departamento_id" class="form-label">Departamento</label>
@@ -97,7 +96,7 @@ function validarFormulario() {
 
     if (idade < 14 || (idade === 14 && diferencaMeses < 0)) {
         Toastify({
-            text: "Por favor, insira uma idade válida.",
+            text: "Por favor, insira uma data de nascimento válida (mínimo 14 anos).",
             backgroundColor: "red",
             duration: 3000
         }).showToast();

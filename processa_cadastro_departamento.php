@@ -1,15 +1,24 @@
 <?php
 include 'conexao.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nome_departamento = $_POST['nome_departamento'];
+    $descricao = $_POST['descricao'];
 
-    $sql = "INSERT INTO departamentos (nome) VALUES ('$nome_departamento')";
+    // Verifica se o departamento já existe
+    $sql = "SELECT * FROM departamentos WHERE nome = '$nome_departamento'";
+    $result = $conn->query($sql);
 
-    if ($conn->query($sql) === TRUE) {
-        echo "Departamento cadastrado com sucesso!";
+    if ($result->num_rows > 0) {
+        echo "Erro: Departamento já cadastrado.";
     } else {
-        echo "Erro: " . $conn->error;
+        // Insere novo departamento
+        $sql = "INSERT INTO departamentos (nome, descricao) VALUES ('$nome_departamento', '$descricao')";
+        if ($conn->query($sql) === TRUE) {
+            echo "sucesso";
+        } else {
+            echo "Erro ao cadastrar departamento: " . $conn->error;
+        }
     }
 }
 ?>

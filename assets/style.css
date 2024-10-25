@@ -142,3 +142,14 @@
             color: #000;
             z-index: 0;
         }
+
+.scrollable-table {
+    max-height: 300px; 
+    overflow-y: auto; 
+    border: 1px solid #ccc; 
+}
+
+
+.table td, .table th {
+    color: #000; 
+}

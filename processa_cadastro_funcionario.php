@@ -6,18 +6,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data_nascimento = $_POST['data_nascimento'];
     $salario = $_POST['salario'];
     $departamento_id = $_POST['departamento_id'];
-    $data_admissao = $_POST['data_admissao']; 
+    $data_admissao = $_POST['data_admissao'];
 
-    $dataNascimento = new DateTime($data_nascimento);
-    $hoje = new DateTime();
-    $idade = $hoje->diff($dataNascimento)->y;
-
+    // Formatar o salário para o formato correto
     $salarioFormatado = str_replace(['.', ','], ['', '.'], $salario);
 
-    $sql = "INSERT INTO funcionarios (nome, idade, salario, departamento_id, data_admissao) VALUES (?, ?, ?, ?, ?)";
+    // Inserir os dados no banco de dados
+    $sql = "INSERT INTO funcionarios (nome, data_nascimento, salario, departamento_id, data_admissao) VALUES (?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sidis", $nome, $idade, $salarioFormatado, $departamento_id, $data_admissao);
-    
+    $stmt->bind_param("ssdss", $nome, $data_nascimento, $salarioFormatado, $departamento_id, $data_admissao);
+
     if ($stmt->execute()) {
         echo "Funcionário cadastrado com sucesso!";
     } else {

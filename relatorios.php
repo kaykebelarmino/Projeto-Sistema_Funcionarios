@@ -20,6 +20,11 @@ $resultDepartamentos = $conn->query($sqlDepartamentos);
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
     <script src="assets/script.js" defer></script>
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body class="overflow-x-hidden">
 <div class="container-fluid">
@@ -64,8 +69,15 @@ $resultDepartamentos = $conn->query($sqlDepartamentos);
                 </div>
             </div>
         </form>
-        <h4>Relatório de Faltas e Folgas</h4>
-        <div class="scrollable">
+
+        <!-- Botões para Alternar as Tabelas -->
+        <div class="mb-3">
+            <button id="btnFaltasFolgas" class="btn btn-primary">Faltas e Folgas</button>
+            <button id="btnSalariosPLR" class="btn btn-primary">Salários e PLR</button>
+        </div>
+
+        <h4 id="faltaFolgaHeader">Relatório de Faltas e Folgas</h4>
+        <div class="scrollable" id="faltaFolgaTable">
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -111,8 +123,9 @@ $resultDepartamentos = $conn->query($sqlDepartamentos);
                 </tbody>
             </table>
         </div>
-        <h4>PLR dos Funcionários</h4>
-        <div class="scrollable">
+
+        <h4 class="hidden" id="plrTableHeader">PLR dos Funcionários</h4>
+        <div class="scrollable hidden" id="plrTable">
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -160,8 +173,9 @@ $resultDepartamentos = $conn->query($sqlDepartamentos);
                                     $mesesTrabalhados = (12 - $mesAdmissao + 1) + ($anoAtual - $anoAdmissao - 1) * 12 + $mesAtual;
                                 }
 
+                                // Cálculo de PLR: verifica se o funcionário foi admitido antes de 2024
                                 $mesesPLR = ($dataAdmissao < strtotime('2024-01-01')) ? $mesAtual : ($mesAtual - $mesAdmissao + 1);
-                                $plr = round(($salario * 0.65) * $mesesPLR, 2);
+                                $plr = round((0.65 / 12) * $mesesTrabalhados * $salario);
                                 
                                 echo "<tr>
                                     <td class='text-black'>" . ucwords(strtolower($row['nome'])) . "</td>
@@ -213,6 +227,21 @@ function confirmarDemissao(id, nome) {
             });
     }
 }
+
+// Função para alternar entre as tabelas
+document.getElementById('btnFaltasFolgas').addEventListener('click', function() {
+    document.getElementById('faltaFolgaTable').classList.remove('hidden');
+    document.getElementById('plrTable').classList.add('hidden');
+    document.getElementById('plrTableHeader').classList.add('hidden');
+    document.getElementById('faltaFolgaHeader').classList.remove('hidden');
+});
+
+document.getElementById('btnSalariosPLR').addEventListener('click', function() {
+    document.getElementById('plrTable').classList.remove('hidden');
+    document.getElementById('plrTableHeader').classList.remove('hidden');
+    document.getElementById('faltaFolgaTable').classList.add('hidden');
+    document.getElementById('faltaFolgaHeader').classList.add('hidden');
+});
 </script>
 </body>
 </html>
