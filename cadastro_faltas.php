@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Folgas</title>
+    <title>Cadastro de Faltas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.css">
     <link rel="stylesheet" href="assets/style.css">
@@ -30,20 +30,20 @@
     </section>
 
     <div class="col-md-8 mt-4">
-        <h2 class="text-center">Cadastro de folgas</h2>
+        <h2 class="text-center">Cadastro de faltas</h2>
     </div>
 </div>
 <div>
 
 <div class="container mt-4">
-    <form id="formFolga" action="processa_cadastro_folgas.php" method="POST">
+    <form id="formFalta" action="processa_cadastro_faltas.php" method="POST">
         <div class="mb-3">
             <label for="funcionario_id" class="form-label">Funcionário</label>
             <select class="form-select" id="funcionario_id" name="funcionario_id" required>
                 <option value="" selected>Selecione um funcionário</option>
                 <?php
                 include 'conexao.php';
-                $sql = "SELECT * FROM funcionarios";
+                $sql = "SELECT id, nome FROM funcionarios";
                 $result = $conn->query($sql);
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
@@ -54,12 +54,59 @@
             </select>
         </div>
         <div class="mb-3">
-            <label for="data_folga" class="form-label">Data da Folga</label>
-            <input type="date" class="form-control" id="data_folga" name="data_folga" required>
+            <label for="data_falta" class="form-label">Data da Falta</label>
+            <input type="date" class="form-control" id="data_falta" name="data_falta" required>
         </div>
-        <button type="submit" class="btn btn-primary">Cadastrar Folga</button>
+        <button type="submit" class="btn btn-primary">Cadastrar Falta</button>
     </form>
 </div>
+
+<script>
+    document.getElementById('funcionario_id').addEventListener('change', async function () {
+    const funcionarioId = this.value;
+
+    if (funcionarioId) {
+        const response = await fetch(`obter_data_admissao.php?id=${funcionarioId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const dataFalta = document.getElementById('data_falta');
+            dataFalta.min = data.data_admissao; // Define a data mínima no campo de falta
+            const today = new Date().toISOString().split('T')[0]; // Data atual no formato yyyy-mm-dd
+            dataFalta.max = today; // Define a data máxima como a data atual
+        } else {
+            console.error('Erro ao buscar a data de admissão.');
+        }
+    }
+});
+
+const formFalta = document.querySelector('#formFalta');
+
+formFalta.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(formFalta);
+    const response = await fetch('processa_cadastro_faltas.php', {
+        method: 'POST',
+        body: formData
+    });
+    const data = await response.json();
+    Toastify({
+        text: data.message,
+        duration: 3000,
+        gravity: "top",
+        position: 'right',
+        style: {
+            background: data.success ? "green" : "red"
+        }
+    }).showToast();
+
+    if (data.success) {
+        formFalta.reset();
+    }
+});
+
+</script>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>

@@ -161,34 +161,29 @@ $resultDepartamentos = $conn->query($sqlDepartamentos);
                                 $dataAdmissao = strtotime($row['data_admissao']);
                                 $mesesTrabalhados = 0;
 
+                                // Data atual
                                 $dataAtual = strtotime(date('Y-m-d'));
                                 $anoAdmissao = date('Y', $dataAdmissao);
                                 $mesAdmissao = date('m', $dataAdmissao);
                                 $anoAtual = date('Y', $dataAtual);
                                 $mesAtual = date('m', $dataAtual);
 
-                                if ($anoAdmissao == $anoAtual) {
-                                    $mesesTrabalhados = ($mesAtual - $mesAdmissao + 1);
-                                } else {
-                                    $mesesTrabalhados = (12 - $mesAdmissao + 1) + ($anoAtual - $anoAdmissao - 1) * 12 + $mesAtual;
-                                }
+                                // Ajuste para quando a admissão for antes de 1º de janeiro
+                                $primeiroDiaAnoAtual = strtotime('01-01-' . date('Y'));
+                                $inicioContagemMeses = ($dataAdmissao < $primeiroDiaAnoAtual) ? $primeiroDiaAnoAtual : $dataAdmissao;
 
-                                // Cálculo de PLR: verifica se o funcionário foi admitido antes de 2024
-                                $mesesPLR = ($dataAdmissao < strtotime('2024-01-01')) ? $mesAtual : ($mesAtual - $mesAdmissao + 1);
+                                // Calcular meses trabalhados com base na data de admissão e a data atual
+                                $intervalo = date_diff(new DateTime(date('Y-m-d', $inicioContagemMeses)), new DateTime(date('Y-m-d', $dataAtual)));
+                                $mesesTrabalhados = ($intervalo->y * 12) + $intervalo->m;
+
+                                // Cálculo do PLR
                                 $plr = round((0.65 / 12) * $mesesTrabalhados * $salario);
                                 
                                 echo "<tr>
                                     <td class='text-black'>" . ucwords(strtolower($row['nome'])) . "</td>
                                     <td class='text-black'>R$ " . number_format($salario, 2, ',', '.') . "</td>
-                                    <td class='text-black'>" . date('d/m/Y', strtotime($row['data_admissao'])) . "</td>
+                                    <td class='text-black'>" . date('d/m/Y', $dataAdmissao) . "</td>
                                     <td class='text-black'>R$ " . number_format($plr, 2, ',', '.') . "</td>
-                                </tr>";
-                            } else {
-                                echo "<tr>
-                                    <td class='text-black'>" . ucwords(strtolower($row['nome'])) . "</td>
-                                    <td class='text-black'>R$ " . number_format($salario, 2, ',', '.') . "</td>
-                                    <td class='text-black'>Data de admissão inválida</td>
-                                    <td class='text-black'>R$ 0,00</td>
                                 </tr>";
                             }
                         }
@@ -201,47 +196,28 @@ $resultDepartamentos = $conn->query($sqlDepartamentos);
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-function confirmarDemissao(id, nome) {
-    if (confirm(`Você tem certeza que deseja demitir ${nome}?`)) {
-        fetch(`demitir_funcionario.php?id=${id}`)
-            .then(response => response.json())
-            .then(data => {
-                Toastify({
-                    text: data.message,
-                    duration: 3000,
-                    gravity: "top",
-                    position: 'right',
-                    backgroundColor: data.status === "success" ? "#4CAF50" : "#FF5733",
-                }).showToast();
-            })
-            .catch(error => {
-                console.error("Erro:", error);
-                Toastify({
-                    text: "Erro ao processar a solicitação.",
-                    duration: 3000,
-                    gravity: "top",
-                    position: 'right',
-                    backgroundColor: "#FF5733",
-                }).showToast();
-            });
+    document.getElementById('btnFaltasFolgas').addEventListener('click', function() {
+        document.getElementById('faltaFolgaTable').classList.remove('hidden');
+        document.getElementById('plrTable').classList.add('hidden');
+        document.getElementById('faltaFolgaHeader').classList.remove('hidden');
+        document.getElementById('plrTableHeader').classList.add('hidden');
+    });
+
+    document.getElementById('btnSalariosPLR').addEventListener('click', function() {
+        document.getElementById('plrTable').classList.remove('hidden');
+        document.getElementById('faltaFolgaTable').classList.add('hidden');
+        document.getElementById('plrTableHeader').classList.remove('hidden');
+        document.getElementById('faltaFolgaHeader').classList.add('hidden');
+    });
+
+    function confirmarDemissao(id, nome) {
+        if (confirm("Tem certeza que deseja demitir " + nome + "?")) {
+            window.location.href = "demitir_funcionario.php?id=" + id;
+        }
     }
-}
-
-// Função para alternar entre as tabelas
-document.getElementById('btnFaltasFolgas').addEventListener('click', function() {
-    document.getElementById('faltaFolgaTable').classList.remove('hidden');
-    document.getElementById('plrTable').classList.add('hidden');
-    document.getElementById('plrTableHeader').classList.add('hidden');
-    document.getElementById('faltaFolgaHeader').classList.remove('hidden');
-});
-
-document.getElementById('btnSalariosPLR').addEventListener('click', function() {
-    document.getElementById('plrTable').classList.remove('hidden');
-    document.getElementById('plrTableHeader').classList.remove('hidden');
-    document.getElementById('faltaFolgaTable').classList.add('hidden');
-    document.getElementById('faltaFolgaHeader').classList.add('hidden');
-});
 </script>
 </body>
 </html>

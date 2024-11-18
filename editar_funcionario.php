@@ -10,28 +10,39 @@ if ($id > 0) {
     $stmt->execute();
     $result = $stmt->get_result();
     $funcionario = $result->fetch_assoc();
+    
+    // Formatar a data de admissão e nascimento para o formato correto
+    $data_admissao_formatada = date('Y-m-d', strtotime($funcionario['data_admissao']));
+    $data_nascimento_formatada = date('Y-m-d', strtotime($funcionario['data_nascimento']));
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Capturando os dados do formulário
     $nome = $_POST['nome'];
     $salario = $_POST['salario'];
     $data_nascimento = $_POST['data_nascimento'];
     $data_admissao = $_POST['data_admissao'];
     $departamento_id = $_POST['departamento_id'];
 
+    // Calculando a idade a partir da data de nascimento
     $idade = date_diff(date_create($data_nascimento), date_create('now'))->y;
 
-    $sql = "UPDATE funcionarios SET nome = ?, salario = ?, idade = ?, departamento_id = ?, data_admissao = ? WHERE id = ?";
+    // Atualizar os dados no banco de dados
+    $sql = "UPDATE funcionarios SET nome = ?, salario = ?, data_nascimento = ?, data_admissao = ?, departamento_id = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('ssissi', $nome, $salario, $idade, $departamento_id, $data_admissao, $id);
+    $stmt->bind_param('sssisi', $nome, $salario, $data_nascimento, $data_admissao, $departamento_id, $id);
 
     if ($stmt->execute()) {
+        // Se a atualização for bem-sucedida, exibir mensagem de sucesso
         echo "<script>alert('Funcionário atualizado com sucesso!'); window.location.href='relatorios.php';</script>";
     } else {
+        // Se houver erro, exibir mensagem de erro
         echo "<script>alert('Erro ao atualizar funcionário. Tente novamente.');</script>";
     }
 }
 
+
+// Puxar os departamentos para exibir na lista suspensa
 $sqlDepartamentos = "SELECT * FROM departamentos";
 $resultDepartamentos = $conn->query($sqlDepartamentos);
 ?>
@@ -75,37 +86,38 @@ $resultDepartamentos = $conn->query($sqlDepartamentos);
     </div>
     
     <?php if ($funcionario): ?>
-    <form id="editFuncionario" class="mt-4" method="POST">
-        <div class="mb-3">
-            <label for="nome" class="form-label">Nome</label>
-            <input type="text" name="nome" class="form-control" id="nome" value="<?php echo htmlspecialchars($funcionario['nome']); ?>" required>
-        </div>
-        <div class="mb-3">
-            <label for="salario" class="form-label">Salário</label>
-            <input type="text" name="salario" class="form-control" id="salario" value="<?php echo htmlspecialchars($funcionario['salario']); ?>" required>
-        </div>
-        <div class="mb-3">
-            <label for="data_nascimento" class="form-label">Data de Nascimento</label>
-            <input type="date" name="data_nascimento" class="form-control" id="data_nascimento" required>
-        </div>
-        <div class="mb-3">
-            <label for="data_admissao" class="form-label">Data de Admissão</label>
-            <input type="date" name="data_admissao" class="form-control" id="data_admissao" required>
-        </div>
-        <div class="mb-3">
-            <label for="departamento_id" class="form-label">Departamento</label>
-            <select name="departamento_id" class="form-select" id="departamento_id" required>
-                <option value="">Selecione o Departamento</option>
-                <?php while ($departamento = $resultDepartamentos->fetch_assoc()): ?>
-                    <option value="<?php echo $departamento['id']; ?>" <?php if ($departamento['id'] == $funcionario['departamento_id']) echo 'selected'; ?>>
-                        <?php echo htmlspecialchars($departamento['nome']); ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Salvar</button>
-        <a href="relatorios.php" class="btn btn-secondary">Cancelar</a>
-    </form>
+        <form id="editFuncionario" class="mt-4" method="POST">
+            <div class="mb-3">
+                <label for="nome" class="form-label">Nome</label>
+                <input type="text" name="nome" class="form-control" id="nome" value="<?php echo htmlspecialchars($funcionario['nome']); ?>" required>
+            </div>
+            <div class="mb-3">
+                <label for="salario" class="form-label">Salário</label>
+                <input type="text" name="salario" class="form-control" id="salario" value="<?php echo htmlspecialchars($funcionario['salario']); ?>" required>
+            </div>
+            <div class="mb-3">
+                <label for="data_nascimento" class="form-label">Data de Nascimento</label>
+                <input type="date" name="data_nascimento" class="form-control" id="data_nascimento" value="<?php echo $data_nascimento_formatada; ?>" required>
+            </div>
+            <div class="mb-3">
+                <label for="data_admissao" class="form-label">Data de Admissão</label>
+                <input type="date" name="data_admissao" class="form-control" id="data_admissao" value="<?php echo $data_admissao_formatada; ?>" required>
+            </div>
+            <div class="mb-3">
+                <label for="departamento_id" class="form-label">Departamento</label>
+                <select name="departamento_id" class="form-select" id="departamento_id" required>
+                    <option value="">Selecione o Departamento</option>
+                    <?php while ($departamento = $resultDepartamentos->fetch_assoc()): ?>
+                        <option value="<?php echo $departamento['id']; ?>" <?php if ($departamento['id'] == $funcionario['departamento_id']) echo 'selected'; ?>>
+                            <?php echo htmlspecialchars($departamento['nome']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="relatorios.php" class="btn btn-secondary">Cancelar</a>
+        </form>
+
     <?php else: ?>
         <p>Funcionário não encontrado.</p>
     <?php endif; ?>
@@ -115,11 +127,15 @@ $resultDepartamentos = $conn->query($sqlDepartamentos);
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
 
-    
 document.getElementById('editFuncionario').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
     
+    // Verificar os dados antes de enviar
+    for (let [key, value] of formData.entries()) {
+        console.log(key + ': ' + value);
+    }
+
     fetch(window.location.href, {
         method: 'POST',
         body: formData
@@ -146,6 +162,7 @@ document.getElementById('editFuncionario').addEventListener('submit', function(e
         }).showToast();
     });
 });
+
 </script>
 </body>
 

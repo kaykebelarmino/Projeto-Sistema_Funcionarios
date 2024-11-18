@@ -43,7 +43,7 @@
                 <option value="" selected>Selecione um funcionário</option>
                 <?php
                 include 'conexao.php';
-                $sql = "SELECT * FROM funcionarios";
+                $sql = "SELECT id, nome FROM funcionarios";
                 $result = $conn->query($sql);
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
@@ -60,6 +60,53 @@
         <button type="submit" class="btn btn-primary">Cadastrar Folga</button>
     </form>
 </div>
+
+<script>
+    // Quando um funcionário for selecionado, buscar a data de admissão
+document.getElementById('funcionario_id').addEventListener('change', async function () {
+    const funcionarioId = this.value;
+    
+    if (funcionarioId) {
+        const response = await fetch(`obter_data_admissao.php?id=${funcionarioId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const dataFolga = document.getElementById('data_folga');
+            dataFolga.min = data.data_admissao; // Define a data mínima no campo de folga
+            const today = new Date().toISOString().split('T')[0]; // Data atual no formato yyyy-mm-dd
+            dataFolga.max = today; // Define a data máxima como a data atual
+        } else {
+            console.error('Erro ao buscar a data de admissão.');
+        }
+    }
+});
+
+// Validação no front-end ao submeter o formulário
+const formFolga = document.querySelector('#formFolga');
+formFolga.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(formFolga);
+    const response = await fetch('processa_cadastro_folgas.php', {
+        method: 'POST',
+        body: formData
+    });
+    const data = await response.json();
+    Toastify({
+        text: data.message,
+        duration: 3000,
+        gravity: "top",
+        position: 'right',
+        style: {
+            background: data.success ? "green" : "red"
+        }
+    }).showToast();
+
+    if (data.success) {
+        formFolga.reset();
+    }
+});
+</script>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>

@@ -7,27 +7,56 @@ $result_salarios = $conn->query($sql_salarios);
 $row_salarios = $result_salarios->fetch_assoc();
 $total_salarios = $row_salarios['total_salarios'];
 
-// Consulta para obter o total de PLR (supondo que você tenha uma coluna de PLR)
-$sql_plr = "SELECT SUM(plr) AS total_plr FROM funcionarios";
-$result_plr = $conn->query($sql_plr);
-$row_plr = $result_plr->fetch_assoc();
-$total_plr = $row_plr['total_plr'];
+// Função para calcular o PLR com base na data de admissão
+function calcularPLR($dataAdmissao, $salario) {
+    $mesAtual = date('m'); // Mês atual
+    $dataAdmissao = strtotime($dataAdmissao);
+    $mesAdmissao = date('m', $dataAdmissao);
 
-// Consulta para obter a quantidade de funcionários por departamento
-$sql_departamentos = "SELECT d.nome AS departamento, COUNT(f.id) AS total_funcionarios 
-                      FROM departamentos d 
+    // Calcula os meses de PLR baseando-se se o funcionário foi admitido antes ou depois de 01/01/2024
+    $mesesTrabalhados = ($dataAdmissao < strtotime('2024-01-01')) ? $mesAtual : ($mesAtual - $mesAdmissao + 1);
+
+    // Fórmula para calcular o PLR
+    $plr = round((0.65 / 12) * $mesesTrabalhados * $salario);
+    return $plr;
+}
+
+// Consulta para obter os salários e as datas de admissão de cada funcionário
+$sql_funcionarios = "SELECT salario, data_admissao FROM funcionarios";
+$result_funcionarios = $conn->query($sql_funcionarios);
+
+$total_plr = 0; // Inicializa o total de PLR
+
+// Percorre cada funcionário para calcular o PLR
+if ($result_funcionarios->num_rows > 0) {
+    while ($row_funcionario = $result_funcionarios->fetch_assoc()) {
+        $salario = $row_funcionario['salario'];
+        $dataAdmissao = $row_funcionario['data_admissao'];
+
+        // Calcula o PLR para o funcionário
+        $plr = calcularPLR($dataAdmissao, $salario);
+        
+        // Soma ao total de PLR
+        $total_plr += $plr;
+    }
+}
+
+// Consulta para obter departamentos e o número de funcionários por departamento
+$sql_departamentos = "SELECT d.nome, COUNT(f.id) as num_funcionarios 
+                      FROM departamentos d
                       LEFT JOIN funcionarios f ON f.departamento_id = d.id
                       GROUP BY d.nome";
 $result_departamentos = $conn->query($sql_departamentos);
 
-// Criar arrays para os nomes dos departamentos e quantidade de funcionários
 $departamentos = [];
 $funcionarios_por_departamento = [];
 
 while ($row_departamento = $result_departamentos->fetch_assoc()) {
-    $departamentos[] = $row_departamento['departamento'];
-    $funcionarios_por_departamento[] = $row_departamento['total_funcionarios'];
+    $departamentos[] = $row_departamento['nome'];
+    $funcionarios_por_departamento[] = $row_departamento['num_funcionarios'];
 }
+
+
 ?>
 
 <!DOCTYPE html>
@@ -42,7 +71,7 @@ while ($row_departamento = $result_departamentos->fetch_assoc()) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="assets/script.js" defer></script>
 </head>
-<body class="overflow-hidden">
+<body>
 
 <div class="container-fluid">
     <div class="bg-black container-header">
@@ -64,7 +93,7 @@ while ($row_departamento = $result_departamentos->fetch_assoc()) {
         </section>
 
         <div class="col-md-8 mt-4">
-            <h2>Relatórios da Empresa</h2>
+            <h2 class="text-center">Relatórios da Empresa</h2>
         </div>
     </div>
 </div>
@@ -74,24 +103,21 @@ while ($row_departamento = $result_departamentos->fetch_assoc()) {
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Total de Salários</th>
-                <th>Total de PLR</th>
+                <th><p style="color: black;"><strong style="color: black;">Total de Salários:</strong> Soma dos salarios da empresa. </p></th>
+                <th><p style="color: black;"><strong style="color: black;">Total de PLR:</strong> PLR total da empresa</p></th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>R$ <?php echo number_format($total_salarios ?? 0, 2, ',', '.'); ?></td>
-                <td>PLR não disponível</td> <!-- Coluna de PLR temporariamente desabilitada -->
+            <td>R$ <?php echo number_format($total_salarios ?? 0, 2, ',', '.'); ?></td>
+            <td>R$ <?php echo number_format($total_plr ?? 0, 2, ',', '.'); ?></td>
             </tr>
         </tbody>
     </table>
-    <p><strong>Legenda:</strong></p>
-    <p><strong>Total de Salários:</strong> Refere-se à soma total dos salários de todos os funcionários da empresa.</p>
-    <p><strong>Total de PLR:</strong> Refere-se ao total de Participação nos Lucros e Resultados (PLR) dos funcionários. Essa coluna pode estar temporariamente desabilitada.</p>
 </div>
 
 <div class="container mt-4">
-    <h3>Distribuição de Funcionários por Departamento</h3>
+    <h3 style="color: black;">Distribuição de Funcionários por Departamento</h3>
     <canvas id="graficoDepartamentos" width="400" height="200"></canvas>
 </div>
 

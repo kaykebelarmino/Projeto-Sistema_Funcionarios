@@ -77,6 +77,7 @@ include 'conexao.php';
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
+
 function validarFormulario() {
     const nome = document.getElementById('nome').value;
     const nomeSplit = nome.trim().split(' ');
@@ -90,13 +91,48 @@ function validarFormulario() {
     }
 
     const dataNascimento = new Date(document.getElementById('data_nascimento').value);
+    const dataAdmissao = new Date(document.getElementById('data_admissao').value);
     const hoje = new Date();
+
     const idade = hoje.getFullYear() - dataNascimento.getFullYear();
     const diferencaMeses = hoje.getMonth() - dataNascimento.getMonth();
+    const diferencaDias = hoje.getDate() - dataNascimento.getDate();
 
-    if (idade < 14 || (idade === 14 && diferencaMeses < 0)) {
+    if (idade < 14 || (idade === 14 && (diferencaMeses < 0 || (diferencaMeses === 0 && diferencaDias < 0)))) {
         Toastify({
-            text: "Por favor, insira uma data de nascimento válida (mínimo 14 anos).",
+            text: "Funcionário deve ter no mínimo 14 anos.",
+            backgroundColor: "red",
+            duration: 3000
+        }).showToast();
+        return false;
+    }
+
+    // Verificação da diferença de 14 anos entre nascimento e admissão
+    const idadeAdmissao = dataAdmissao.getFullYear() - dataNascimento.getFullYear();
+    const admissaoMeses = dataAdmissao.getMonth() - dataNascimento.getMonth();
+    const admissaoDias = dataAdmissao.getDate() - dataNascimento.getDate();
+
+    if (idadeAdmissao < 14 || (idadeAdmissao === 14 && (admissaoMeses < 0 || (admissaoMeses === 0 && admissaoDias < 0)))) {
+        Toastify({
+            text: "A data de admissão deve ser no mínimo 14 anos após a data de nascimento.",
+            backgroundColor: "red",
+            duration: 3000
+        }).showToast();
+        return false;
+    }
+
+    if (dataAdmissao > hoje) {
+        Toastify({
+            text: "A data de admissão não pode ser uma data futura.",
+            backgroundColor: "red",
+            duration: 3000
+        }).showToast();
+        return false;
+    }
+
+    if (dataAdmissao < dataNascimento) {
+        Toastify({
+            text: "A data de admissão não pode ser anterior à data de nascimento.",
             backgroundColor: "red",
             duration: 3000
         }).showToast();
